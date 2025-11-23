@@ -13,5 +13,13 @@ app.get("/", (req, res) => {
     res.send("Smart Inventory AI API is running...");
 });
 
+app.post("/echo", (req, res) => {
+    // Zwróci to co dostanie w body
+    res.json({
+        received: req.body
+    });
+});
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
