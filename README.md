@@ -59,6 +59,7 @@ Example response:
   "db": "connected",
   "time": "2025-01-03T12:41:22.123Z"
 }
+```
 
 🗄️ Database Schema (PostgreSQL)
 Backend uses a relational database designed for inventory, users, and AI features.
