@@ -1,64 +1,53 @@
-import requests
 import json
+import requests
+import sys
 
-def ask_headers():
-    print("\nPodaj nagłówki (ENTER aby zakończyć):")
-    headers = {}
-    while True:
-        key = input("Nazwa nagłówka (lub ENTER): ")
-        if not key:
-            break
-        value = input("Wartość: ")
-        headers[key] = value
-    return headers
+def send_request_from_file(file_path):
+    print(f"📄 Loading request data from: {file_path}")
 
-def ask_json_body():
-    print("\nPodaj body w formacie JSON (ENTER = brak):")
-    body = input("> ")
-    if not body.strip():
-        return None
+    # Load JSON file
     try:
-        return json.loads(body)
-    except json.JSONDecodeError:
-        print("❌ Błąd — to nie jest poprawny JSON.")
-        return ask_json_body()
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        print("❌ Failed to load JSON file:", e)
+        return
 
-def main():
-    print("=== Mini-Postman w Pythonie ===")
-    print("Wyślij zapytania HTTP (GET, POST, PUT, DELETE)\n")
+    method = data.get("method", "GET").upper()
+    url = data.get("url")
+    headers = data.get("headers", {})
+    body = data.get("body", None)
 
-    while True:
-        method = input("\nMetoda HTTP: ").upper().strip()
-        if method not in ["GET", "POST", "PUT", "DELETE"]:
-            print("Dozwolone: GET, POST, PUT, DELETE")
-            continue
+    if not url:
+        print("❌ Error: URL is required in the file")
+        return
 
-        url = input("URL: ").strip()
-        headers = ask_headers()
-        json_body = ask_json_body() if method in ["POST", "PUT"] else None
+    print(f"\n➡️ Sending {method} request to {url}...\n")
 
-        print("\n➡️ Wysyłam zapytanie...\n")
+    try:
+        response = requests.request(
+            method=method,
+            url=url,
+            headers=headers,
+            json=body
+        )
+    except Exception as e:
+        print("❌ Request error:", e)
+        return
 
-        try:
-            response = requests.request(
-                method=method,
-                url=url,
-                headers=headers,
-                json=json_body
-            )
+    print("📌 Status:", response.status_code)
+    print("\n📥 Response:")
 
-            print("📌 Status:", response.status_code)
-            print("\n📥 Odpowiedź:")
-            try:
-                print(json.dumps(response.json(), indent=4, ensure_ascii=False))
-            except:
-                print(response.text)
+    try:
+        print(json.dumps(response.json(), indent=4, ensure_ascii=False))
+    except:
+        print(response.text)
 
-        except Exception as e:
-            print("❌ Błąd:", e)
-
-        if input("\nWysłać kolejne zapytanie? (t/n): ").lower() != "t":
-            break
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) != 2:
+        print("Usage:")
+        print("   python3 mini_postman.py request.json")
+        sys.exit(1)
+
+    send_request_from_file(sys.argv[1])

@@ -38,6 +38,9 @@ const gracefulShutdown = async (signal) => {
     }
 };
 
+db.query("SELECT current_database()").then(res => {
+    console.log("📌 Connected to DB:", res.rows[0].current_database);
+});
 // Linux/macOS system signals
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));

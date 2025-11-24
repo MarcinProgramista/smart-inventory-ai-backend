@@ -8,6 +8,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { logger } from "./middleware/logger.js";
 import { db } from "./db.js";
 import { requireDB } from "./middleware/requireDB.js";
+import registerRoute from "./routes/registerRoute.js";
 
 
 dotenv.config();
@@ -52,6 +53,8 @@ app.get("/ready", async (req, res) => {
         res.status(503).json({ status: "db-down" });
     }
 });
+
+app.use("/api/register", registerRoute);
 
 // Full health status
 app.get("/health", async (req, res) => {
