@@ -60,3 +60,61 @@ Example response:
   "time": "2025-01-03T12:41:22.123Z"
 }
 
+🗄️ Database Schema (PostgreSQL)
+Backend uses a relational database designed for inventory, users, and AI features.
+Tables Overview
+
+1. users
+| Column   | Type                | Description     |
+| -------- | ------------------- | --------------- |
+| id       | SERIAL PK           | User ID         |
+| name     | VARCHAR(50)         | Full name       |
+| email    | VARCHAR(300) UNIQUE | Login email     |
+| password | VARCHAR(200)        | Hashed password |
+| token    | VARCHAR(200)        | Reset token     |
+| role_id  | INT FK → roles.id   | User role       |
+
+2. roles
+| Column | Type        | Description             |
+| ------ | ----------- | ----------------------- |
+| id     | SERIAL PK   | Role ID                 |
+| name   | VARCHAR(50) | admin / worker / viewer |
+
+3. categories
+| Column  | Type              | Description   |
+| ------- | ----------------- | ------------- |
+| id      | SERIAL PK         |               |
+| user_id | INT FK → users.id |               |
+| name    | VARCHAR(100)      | Category name |
+
+4. items
+| Column       | Type               | Description          |
+| ------------ | ------------------ | -------------------- |
+| id           | SERIAL PK          |                      |
+| user_id      | FK → users.id      |                      |
+| category_id  | FK → categories.id |                      |
+| name         | VARCHAR(200)       |                      |
+| quantity     | INT                |                      |
+| min_quantity | INT                | Threshold for alerts |
+| supplier     | VARCHAR(150)       |                      |
+| price        | NUMERIC(10,2)      |                      |
+| description  | TEXT               |                      |
+
+5. stock_movements
+| Column     | Type          | Description         |
+| ---------- | ------------- | ------------------- |
+| id         | SERIAL PK     |                     |
+| item_id    | FK → items.id |                     |
+| type       | VARCHAR(20)   | incoming / outgoing |
+| qty        | INT           |                     |
+| created_at | TIMESTAMP     |                     |
+
+6. notifications
+| Column     | Type          | Description |
+| ---------- | ------------- | ----------- |
+| id         | SERIAL PK     |             |
+| user_id    | FK → users.id |             |
+| message    | TEXT          |             |
+| is_read    | BOOLEAN       |             |
+| created_at | TIMESTAMP     |             |
+
