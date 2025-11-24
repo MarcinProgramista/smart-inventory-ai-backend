@@ -65,7 +65,7 @@ Example response:
 Backend uses a relational database designed for inventory, users, and AI features.
 Tables Overview
 
-1. users
+```1. users
 | Column   | Type                | Description     |
 | -------- | ------------------- | --------------- |
 | id       | SERIAL PK           | User ID         |
@@ -117,5 +117,6 @@ Tables Overview
 | user_id    | FK → users.id |             |
 | message    | TEXT          |             |
 | is_read    | BOOLEAN       |             |
-| created_at | TIMESTAMP     |             |
+| created_at | TIMESTAMP     |             |```
+
 
