@@ -3,5 +3,5 @@ const allowedOrigins = [
     "http://localhost:3700",
     "http://localhost:5173",
     "http://localhost:5174",
-    "http://localhost:3700/api/auth/login",
+    "http://localhost:5000/api/auth/login",
 ];
