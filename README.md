@@ -1,122 +1,248 @@
-# 🚀 SmartInventoryAI — Backend  
-Backend for SmartInventoryAI — an intelligent warehouse & inventory management system built with **Node.js**, **Express**, and **PostgreSQL**, enhanced with AI-powered predictions.
+🚀 SmartInventoryAI — Backend
 
-## 🔧 Tech Stack
-- Node.js (ES Modules)
-- Express.js
-- PostgreSQL
-- CORS configuration
-- Custom logger & error handler
-- dotenv
-- AI integration (Gemini/OpenAI) — planned
+SmartInventoryAI is an advanced warehouse & inventory management backend built with Node.js, Express, and PostgreSQL, with planned AI-powered predictions for stock, demand, and anomalies.
 
-## 📌 Core Features
-- Full REST API for inventory management
-- User authentication (planned)
-- Items, categories, and stock movement endpoints
-- Advanced logging system (request logs + error logs)
-- Global error handler
-- CORS security layer
-- Test endpoints:
-  - `GET /` — API status
-  - `POST /echo` — test JSON response
+🔧 Tech Stack
 
-## 📁 Project Structure
+Node.js (ES Modules)
+
+Express.js
+
+PostgreSQL
+
+pg (native driver)
+
+CORS
+
+dotenv
+
+bcrypt
+
+AI Integration (Gemini/OpenAI) — planned
+
+Rich logging & error handling
+
+📌 Core Features
+✔ REST API for inventory and warehouse operations
+✔ User system with roles
+✔ Items, categories, stock, locations
+✔ Request logging (UUID + timestamp)
+✔ Global error handler
+✔ CORS security layer
+✔ Database health checks
+✔ Default categories cloned during user registration
+📁 Project Structure
 smartinventory-backend/
 │
 ├── config/
-│ ├── corsOptions.js # Allowed domains & CORS rules
-│ └── allowedOrigins.js # List of trusted frontend URLs
+│   ├── corsOptions.js         # Allowed domains & CORS rules
+│   └── allowedOrigins.js      # List of trusted frontend URLs
 │
 ├── middleware/
-│ ├── logger.js # Logs every incoming request (uuid + timestamp)
-│ └── errorHandler.js # Global error handler
+│   ├── logger.js              # Logs every incoming request
+│   └── errorHandler.js        # Global error handler
+│
+├── controllers/               # Route handlers (register, items, etc.)
+├── routes/                    # API route grouping
 │
 ├── logs/
-│ ├── reqLog.txt # Saved request logs
-│ └── errLog.txt # Saved backend errors
+│   ├── reqLog.txt             # Saved request logs
+│   └── errLog.txt             # Saved backend errors
 │
-├── server.js # Main server file (Express app)
-├── package.json # Dependencies & scripts
-├── .gitignore # Ignored files
-└── README.md # Project documentation
+├── db.js                      # PostgreSQL client setup & connection
+├── server.js                  # Main Express app
+├── package.json               # Dependencies & scripts
+├── .env.example               # Example environment config
+└── README.md                  # Project documentation
 
-### 🔍 Health Checks
+🔍 Health Check Endpoints
 
-Backend includes professional health-check endpoints used in production environments:
+Used to monitor production systems:
 
-| Endpoint | Meaning |
-|---------|---------|
-| **GET /live** | Confirms the server is running |
-| **GET /ready** | Checks if server is ready (DB online) |
-| **GET /health** | Full health status including DB |
+Endpoint	Meaning
+GET /live	Server is running
+GET /ready	Checks DB connection
+GET /health	Full system health
 
-Example response:
+Example /health response:
 
-```json
 {
   "status": "healthy",
   "db": "connected",
   "time": "2025-01-03T12:41:22.123Z"
 }
-```
 
-🗄️ Database Schema (PostgreSQL)
-Backend uses a relational database designed for inventory, users, and AI features.
-Tables Overview
+🗄️ Database Setup (PostgreSQL)
+1. Create the database
+createdb smart_inventory
 
-```1. users
-| Column   | Type                | Description     |
-| -------- | ------------------- | --------------- |
-| id       | SERIAL PK           | User ID         |
-| name     | VARCHAR(50)         | Full name       |
-| email    | VARCHAR(300) UNIQUE | Login email     |
-| password | VARCHAR(200)        | Hashed password |
-| token    | VARCHAR(200)        | Reset token     |
-| role_id  | INT FK → roles.id   | User role       |
+2. Create .env file
+PG_USER=your_user
+PG_PASSWORD=your_password
+PG_HOST=localhost
+PG_PORT=5432
+PG_DATABASE=smart_inventory
 
+PORT=5000
+JWT_SECRET=super_secret_key_12345
+
+3. Load the database schema
+
+If you have a schema.sql:
+
+psql -U <your_user> -d smart_inventory -f schema.sql
+
+
+Or run the SQL from this README manually.
+
+🗃️ Database Schema Overview
+1. users
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    email VARCHAR(300) UNIQUE NOT NULL,
+    password VARCHAR(200) NOT NULL,
+    token VARCHAR(200),
+    role_id INTEGER NOT NULL DEFAULT 2 REFERENCES roles(id),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+Column	Description
+id	Auto-increment user ID
+name	Full name
+email	Unique login email
+password	Hashed password
+token	Password reset / auth token
+role_id	Role (admin, worker, viewer)
+created_at	Timestamp
 2. roles
-| Column | Type        | Description             |
-| ------ | ----------- | ----------------------- |
-| id     | SERIAL PK   | Role ID                 |
-| name   | VARCHAR(50) | admin / worker / viewer |
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL
+);
 
-3. categories
-| Column  | Type              | Description   |
-| ------- | ----------------- | ------------- |
-| id      | SERIAL PK         |               |
-| user_id | INT FK → users.id |               |
-| name    | VARCHAR(100)      | Category name |
+INSERT INTO roles VALUES
+(1, 'admin'),
+(2, 'worker'),
+(3, 'viewer');
 
-4. items
-| Column       | Type               | Description          |
-| ------------ | ------------------ | -------------------- |
-| id           | SERIAL PK          |                      |
-| user_id      | FK → users.id      |                      |
-| category_id  | FK → categories.id |                      |
-| name         | VARCHAR(200)       |                      |
-| quantity     | INT                |                      |
-| min_quantity | INT                | Threshold for alerts |
-| supplier     | VARCHAR(150)       |                      |
-| price        | NUMERIC(10,2)      |                      |
-| description  | TEXT               |                      |
+3. category_default
 
-5. stock_movements
-| Column     | Type          | Description         |
-| ---------- | ------------- | ------------------- |
-| id         | SERIAL PK     |                     |
-| item_id    | FK → items.id |                     |
-| type       | VARCHAR(20)   | incoming / outgoing |
-| qty        | INT           |                     |
-| created_at | TIMESTAMP     |                     |
+Default categories cloned on user registration.
 
-6. notifications
-| Column     | Type          | Description |
-| ---------- | ------------- | ----------- |
-| id         | SERIAL PK     |             |
-| user_id    | FK → users.id |             |
-| message    | TEXT          |             |
-| is_read    | BOOLEAN       |             |
-| created_at | TIMESTAMP     |             |```
+CREATE TABLE category_default (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+INSERT INTO category_default (name) VALUES
+ ('Electronics'),
+ ('Office'),
+ ('Warehouse'),
+ ('Tools'),
+ ('Misc');
+
+4. categories
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL
+);
+
+5. locations
+CREATE TABLE locations (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT
+);
+
+6. items
+CREATE TABLE items (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    category_id INTEGER REFERENCES categories(id),
+    name VARCHAR(200) NOT NULL,
+    quantity INT DEFAULT 0,
+    min_quantity INT DEFAULT 0,
+    supplier VARCHAR(150),
+    price NUMERIC(10,2),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+7. stock
+CREATE TABLE stock (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    item_id INTEGER REFERENCES items(id) ON DELETE CASCADE,
+    location_id INTEGER REFERENCES locations(id),
+    quantity INTEGER NOT NULL DEFAULT 0
+);
+
+8. activity_log
+CREATE TABLE activity_log (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    action VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+🔐 Registration Workflow
+
+User registration (POST /api/register) performs:
+
+Validate request body
+
+Hash password using bcrypt
+
+Insert user into users
+
+Auto-assign role (role_id = 2)
+
+Clone default categories:
+
+INSERT INTO categories (user_id, name)
+SELECT user_id, name FROM category_default
 
 
+Transaction (BEGIN → COMMIT)
+
+▶️ Running the Project
+
+Install dependencies:
+
+npm install
+
+
+Run with nodemon:
+
+npm run dev
+
+
+Run in production mode:
+
+npm start
+
+📮 API Test Tools
+
+Example test request (mini Postman):
+
+python3 mini_postman.py requests/register_user.json
+
+📌 Roadmap
+
+ JWT login + refresh tokens
+
+ AI anomaly detection
+
+ AI stock prediction
+
+ Barcode / QR code support
+
+ Dashboard analytics
+
+🧑‍💻 Author
+
+SmartInventoryAI Backend — 2024–2025
+Created by Marcin Czapla
