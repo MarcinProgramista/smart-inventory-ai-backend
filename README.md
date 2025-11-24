@@ -40,3 +40,23 @@ smartinventory-backend/
 ├── package.json # Dependencies & scripts
 ├── .gitignore # Ignored files
 └── README.md # Project documentation
+
+### 🔍 Health Checks
+
+Backend includes professional health-check endpoints used in production environments:
+
+| Endpoint | Meaning |
+|---------|---------|
+| **GET /live** | Confirms the server is running |
+| **GET /ready** | Checks if server is ready (DB online) |
+| **GET /health** | Full health status including DB |
+
+Example response:
+
+```json
+{
+  "status": "healthy",
+  "db": "connected",
+  "time": "2025-01-03T12:41:22.123Z"
+}
+
