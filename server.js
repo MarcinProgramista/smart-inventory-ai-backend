@@ -5,12 +5,14 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { corsOptions } from "./config/corsOptions.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { logger } from "./middleware/logEvents.js";
 dotenv.config();
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+app.use(logger); // Najpierw logowanie
 // ⬅️ Używamy TWOJEJ konfiguracji CORS
 app.use(cors(corsOptions));
 
