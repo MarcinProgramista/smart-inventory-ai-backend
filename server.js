@@ -7,6 +7,7 @@ import { corsOptions } from "./config/corsOptions.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { logger } from "./middleware/logger.js";
 import { db } from "./db.js";
+import { requireDB } from "./middleware/requireDB.js";
 
 
 dotenv.config();
@@ -18,6 +19,8 @@ const __dirname = path.dirname(__filename);
 app.use(logger);
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(requireDB);   // <-- NOWE
+
 
 app.get("/", (req, res) => {
     res.send("Smart Inventory AI API is running...");
@@ -32,6 +35,41 @@ app.get("/db-test", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// --- HEALTH CHECKS ---
+
+// Liveness probe (czy serwer żyje)
+app.get("/live", (req, res) => {
+    res.json({ status: "ok" });
+});
+
+// Readiness probe (czy gotowy przyjmować ruch)
+app.get("/ready", async (req, res) => {
+    try {
+        await db.query("SELECT 1");
+        res.json({ status: "ready" });
+    } catch {
+        res.status(503).json({ status: "db-down" });
+    }
+});
+
+// Full health status
+app.get("/health", async (req, res) => {
+    try {
+        const result = await db.query("SELECT NOW()");
+        res.json({
+            status: "healthy",
+            db: "connected",
+            time: result.rows[0].now
+        });
+    } catch (err) {
+        res.status(503).json({
+            status: "unhealthy",
+            db: "disconnected"
+        });
+    }
+});
+
 
 app.use(errorHandler);
 
