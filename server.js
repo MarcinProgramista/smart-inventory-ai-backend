@@ -3,10 +3,9 @@ import path from "path";
 import cors from "cors";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
-
 import { corsOptions } from "./config/corsOptions.js";
-import { logger } from "./middleware/logEvents.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { logger } from "./middleware/logger.js";
 
 dotenv.config();
 
@@ -18,7 +17,7 @@ app.use(logger);               // logowanie requestów
 app.use(cors(corsOptions));    // konfiguracja CORS
 app.use(express.json());       // obsługa JSON
 
-// 🧪 Test routes
+// Test route
 app.get("/", (req, res) => {
     res.send("Smart Inventory AI API is running...");
 });
