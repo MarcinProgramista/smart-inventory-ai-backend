@@ -23,6 +23,7 @@ AI Integration (Gemini/OpenAI) — planned
 Rich logging & error handling
 
 📌 Core Features
+```
 ✔ REST API for inventory and warehouse operations
 ✔ User system with roles
 ✔ Items, categories, stock, locations
@@ -31,7 +32,9 @@ Rich logging & error handling
 ✔ CORS security layer
 ✔ Database health checks
 ✔ Default categories cloned during user registration
+```
 📁 Project Structure
+```
 smartinventory-backend/
 │
 ├── config/
@@ -54,29 +57,32 @@ smartinventory-backend/
 ├── package.json               # Dependencies & scripts
 ├── .env.example               # Example environment config
 └── README.md                  # Project documentation
-
+```
 🔍 Health Check Endpoints
-
+```
 Used to monitor production systems:
 
 Endpoint	Meaning
 GET /live	Server is running
 GET /ready	Checks DB connection
 GET /health	Full system health
-
+```
 Example /health response:
-
+```
 {
   "status": "healthy",
   "db": "connected",
   "time": "2025-01-03T12:41:22.123Z"
 }
-
+```
 🗄️ Database Setup (PostgreSQL)
-1. Create the database
-createdb smart_inventory
 
+1. Create the database
+```
+createdb smart_inventory
+```
 2. Create .env file
+```
 PG_USER=your_user
 PG_PASSWORD=your_password
 PG_HOST=localhost
@@ -85,18 +91,20 @@ PG_DATABASE=smart_inventory
 
 PORT=5000
 JWT_SECRET=super_secret_key_12345
-
+```
 3. Load the database schema
-
+```
 If you have a schema.sql:
 
 psql -U <your_user> -d smart_inventory -f schema.sql
 
 
 Or run the SQL from this README manually.
-
+```
 🗃️ Database Schema Overview
+
 1. users
+```
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
@@ -106,8 +114,9 @@ CREATE TABLE users (
     role_id INTEGER NOT NULL DEFAULT 2 REFERENCES roles(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
-
+```
 Column	Description
+```
 id	Auto-increment user ID
 name	Full name
 email	Unique login email
@@ -115,49 +124,56 @@ password	Hashed password
 token	Password reset / auth token
 role_id	Role (admin, worker, viewer)
 created_at	Timestamp
+```
 2. roles
+```
 CREATE TABLE roles (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL
 );
-
+```
+```
 INSERT INTO roles VALUES
 (1, 'admin'),
 (2, 'worker'),
 (3, 'viewer');
-
+```
 3. category_default
 
 Default categories cloned on user registration.
-
+```
 CREATE TABLE category_default (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL
 );
-
+```
+```
 INSERT INTO category_default (name) VALUES
  ('Electronics'),
  ('Office'),
  ('Warehouse'),
  ('Tools'),
  ('Misc');
-
+```
 4. categories
+```
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL
 );
-
+```
 5. locations
+```
 CREATE TABLE locations (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT
 );
-
+```
 6. items
+```
 CREATE TABLE items (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -170,8 +186,9 @@ CREATE TABLE items (
     description TEXT,
     created_at TIMESTAMP DEFAULT NOW()
 );
-
+```
 7. stock
+```
 CREATE TABLE stock (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -179,17 +196,18 @@ CREATE TABLE stock (
     location_id INTEGER REFERENCES locations(id),
     quantity INTEGER NOT NULL DEFAULT 0
 );
-
+```
 8. activity_log
+```
 CREATE TABLE activity_log (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id),
     action VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );
-
+```
 🔐 Registration Workflow
-
+```
 User registration (POST /api/register) performs:
 
 Validate request body
@@ -199,19 +217,19 @@ Hash password using bcrypt
 Insert user into users
 
 Auto-assign role (role_id = 2)
-
+```
 Clone default categories:
-
+```
 INSERT INTO categories (user_id, name)
 SELECT user_id, name FROM category_default
 
 
 Transaction (BEGIN → COMMIT)
-
+```
 ▶️ Running the Project
 
 Install dependencies:
-
+```
 npm install
 
 
@@ -223,15 +241,15 @@ npm run dev
 Run in production mode:
 
 npm start
-
+```
 📮 API Test Tools
 
 Example test request (mini Postman):
-
+```
 python3 mini_postman.py requests/register_user.json
-
+```
 📌 Roadmap
-
+```
  JWT login + refresh tokens
 
  AI anomaly detection
@@ -241,8 +259,9 @@ python3 mini_postman.py requests/register_user.json
  Barcode / QR code support
 
  Dashboard analytics
-
+```
 🧑‍💻 Author
 
-SmartInventoryAI Backend — 2024–2025
+SmartInventoryAI Backend —2025
+
 Created by Marcin Czapla
