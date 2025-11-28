@@ -26,7 +26,7 @@ const getUser = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
-  //console.log(req.body);
+  console.log(req.body);
   const { id, name, email, password } = req.body;
 
   try {
@@ -46,7 +46,6 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   const id = parseInt(req.params.id);
 
-  // Walidacja ID
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({
       message: "Invalid user ID",
@@ -55,7 +54,6 @@ const deleteUser = async (req, res) => {
   }
 
   try {
-    // Sprawdź czy użytkownik istnieje
     const userExists = await db.query("SELECT id FROM users WHERE id = $1", [
       id,
     ]);
@@ -67,9 +65,7 @@ const deleteUser = async (req, res) => {
       });
     }
 
-    // Usuń w odpowiedniej kolejności (najpierw zależności)
-    await db.query("DELETE FROM notes WHERE user_id = $1", [id]);
-    await db.query("DELETE FROM category WHERE user_id = $1", [id]);
+    // USUWAMY TYLKO USERA
     const result = await db.query("DELETE FROM users WHERE id = $1", [id]);
 
     return res.status(200).json({

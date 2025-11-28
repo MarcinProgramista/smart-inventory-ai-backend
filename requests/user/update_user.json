@@ -1,0 +1,13 @@
+{
+  "method": "PATCH",
+  "url": "http://localhost:5000/api/users/update",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "id": 5,
+    "name": "ewa",
+    "email": "ewa@example.com",
+    "password": "12345Ee!"
+  }
+}

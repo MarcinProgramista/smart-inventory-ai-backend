@@ -1,0 +1,13 @@
+{
+  "method": "POST",
+  "url": "http://localhost:5000/api/register",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "name": "Ewa",
+    "email": "ewa.test@example.com",
+    "password": "malenstwo",
+    "password2": "malenstwo"
+  }
+}
