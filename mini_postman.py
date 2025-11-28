@@ -5,6 +5,9 @@ from pathlib import Path
 
 COOKIES_FILE = Path("mini_postman_cookies.json")
 
+# ------------------------------------
+#  COOKIES — LOAD / SAVE
+# ------------------------------------
 
 def load_cookies():
     if COOKIES_FILE.exists():
@@ -15,85 +18,99 @@ def load_cookies():
             return {}
     return {}
 
-
 def save_cookies(cookie_dict):
     with open(COOKIES_FILE, "w") as f:
         json.dump(cookie_dict, f, indent=4)
 
 
-def merge_cookies(existing, new_raw_cookie):
+def merge_cookies(existing, raw_cookie):
     """
-    Extract cookie key=value from 'Set-Cookie' header
-    Example: refresh_token=abcde123; HttpOnly; Path=/
+    Parse full Set-Cookie header:
+      refresh_token=XYZ; Path=/; HttpOnly
     """
-    cookie_value = new_raw_cookie.split(";")[0]  # refresh_token=xxxx
+
+    cookie_value = raw_cookie.split(";")[0]  # refresh_token=xxxxx
     key, value = cookie_value.split("=", 1)
+
+    # ❗ Ignore empty cookies (logout sending refresh_token="")
+    if value == "":
+        return existing
+
     existing[key] = value
     return existing
 
 
 def cookies_to_header(cookie_dict):
-    """
-    Convert JSON cookies to string for header
-    Example: "a=1; b=2"
-    """
-    return "; ".join([f"{k}={v}" for k, v in cookie_dict.items()])
+    """Turn dict into header string: a=1; b=2"""
+    return "; ".join(f"{k}={v}" for k, v in cookie_dict.items())
 
 
-def main():
-    if len(sys.argv) != 2:
-        print("Usage: python mini_postman.py <request.json>")
-        return
+# ------------------------------------
+#  MAIN REQUEST LOGIC
+# ------------------------------------
 
-    request_file = sys.argv[1]
+def send_request_from_file(request_file):
+    print(f"📄 Loading request from: {request_file}")
 
     try:
-        with open(request_file, "r") as file:
-            request_data = json.load(file)
+        with open(request_file, "r") as f:
+            req = json.load(f)
     except Exception as e:
-        print(f"❌ Error loading {request_file}: {e}")
+        print(f"❌ Error reading JSON: {e}")
         return
 
-    method = request_data.get("method")
-    url = request_data.get("url")
-    headers = request_data.get("headers", {})
-    body = request_data.get("body", {})
+    method = req.get("method", "GET").upper()
+    url = req.get("url")
+    headers = req.get("headers", {})
+    body = req.get("body", None)
+
+    if not url:
+        print("❌ URL missing in request file")
+        return
 
     # Load cookies
     cookies = load_cookies()
     if cookies:
         headers["Cookie"] = cookies_to_header(cookies)
 
-    print(f"📄 Loading request from: {request_file}")
-    print(f"➡️ Sending {method} to {url} ...")
+    print(f"➡️ Sending {method} {url}")
 
     try:
         response = requests.request(
             method=method,
             url=url,
             headers=headers,
-            json=body if method != "GET" else None
+            json=body if method in ["POST", "PATCH", "PUT"] else None
         )
     except Exception as e:
-        print("❌ Request error:", e)
+        print(f"❌ Network error: {e}")
         return
 
     print("\n📌 Status:", response.status_code)
     print("📥 Response:")
+
+    # Print JSON or text
     try:
         print(json.dumps(response.json(), indent=4))
     except:
         print(response.text)
 
-    # Save cookies if received
-    raw_cookies = response.headers.get("Set-Cookie")
-
-    if raw_cookies:
-        print("\n🍪 Cookies received:", raw_cookies)
-        cookies = merge_cookies(cookies, raw_cookies)
+    # Save cookies
+    raw_cookie = response.headers.get("Set-Cookie")
+    if raw_cookie:
+        print("\n🍪 NEW COOKIE:", raw_cookie)
+        cookies = merge_cookies(cookies, raw_cookie)
         save_cookies(cookies)
-        print("💾 Cookies saved to mini_postman_cookies.json")
+        print("💾 Cookies saved → mini_postman_cookies.json")
 
+
+# ----------------------------------
+#  ENTRY POINT
+# ----------------------------------
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) != 2:
+        print("Usage: python mini_postman.py <request.json>")
+        sys.exit(1)
+
+    send_request_from_file(sys.argv[1])
