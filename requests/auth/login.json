@@ -1,0 +1,11 @@
+{
+  "method": "POST",
+  "url": "http://localhost:5000/api/auth/login",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "email": "ewa@gmail.com",
+    "password": "12345Ee!"
+  }
+}

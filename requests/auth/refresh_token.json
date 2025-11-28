@@ -1,0 +1,8 @@
+{
+  "method": "GET",
+  "url": "http://localhost:5000/api/auth/refresh_token",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "sendCookies": true
+}

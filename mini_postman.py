@@ -1,53 +1,99 @@
 import json
 import requests
 import sys
+from pathlib import Path
 
-def send_request_from_file(file_path):
-    print(f"📄 Loading request data from: {file_path}")
+COOKIES_FILE = Path("mini_postman_cookies.json")
 
-    # Load JSON file
+
+def load_cookies():
+    if COOKIES_FILE.exists():
+        try:
+            with open(COOKIES_FILE, "r") as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+
+def save_cookies(cookie_dict):
+    with open(COOKIES_FILE, "w") as f:
+        json.dump(cookie_dict, f, indent=4)
+
+
+def merge_cookies(existing, new_raw_cookie):
+    """
+    Extract cookie key=value from 'Set-Cookie' header
+    Example: refresh_token=abcde123; HttpOnly; Path=/
+    """
+    cookie_value = new_raw_cookie.split(";")[0]  # refresh_token=xxxx
+    key, value = cookie_value.split("=", 1)
+    existing[key] = value
+    return existing
+
+
+def cookies_to_header(cookie_dict):
+    """
+    Convert JSON cookies to string for header
+    Example: "a=1; b=2"
+    """
+    return "; ".join([f"{k}={v}" for k, v in cookie_dict.items()])
+
+
+def main():
+    if len(sys.argv) != 2:
+        print("Usage: python mini_postman.py <request.json>")
+        return
+
+    request_file = sys.argv[1]
+
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        with open(request_file, "r") as file:
+            request_data = json.load(file)
     except Exception as e:
-        print("❌ Failed to load JSON file:", e)
+        print(f"❌ Error loading {request_file}: {e}")
         return
 
-    method = data.get("method", "GET").upper()
-    url = data.get("url")
-    headers = data.get("headers", {})
-    body = data.get("body", None)
+    method = request_data.get("method")
+    url = request_data.get("url")
+    headers = request_data.get("headers", {})
+    body = request_data.get("body", {})
 
-    if not url:
-        print("❌ Error: URL is required in the file")
-        return
+    # Load cookies
+    cookies = load_cookies()
+    if cookies:
+        headers["Cookie"] = cookies_to_header(cookies)
 
-    print(f"\n➡️ Sending {method} request to {url}...\n")
+    print(f"📄 Loading request from: {request_file}")
+    print(f"➡️ Sending {method} to {url} ...")
 
     try:
         response = requests.request(
             method=method,
             url=url,
             headers=headers,
-            json=body
+            json=body if method != "GET" else None
         )
     except Exception as e:
         print("❌ Request error:", e)
         return
 
-    print("📌 Status:", response.status_code)
-    print("\n📥 Response:")
-
+    print("\n📌 Status:", response.status_code)
+    print("📥 Response:")
     try:
-        print(json.dumps(response.json(), indent=4, ensure_ascii=False))
+        print(json.dumps(response.json(), indent=4))
     except:
         print(response.text)
 
+    # Save cookies if received
+    raw_cookies = response.headers.get("Set-Cookie")
+
+    if raw_cookies:
+        print("\n🍪 Cookies received:", raw_cookies)
+        cookies = merge_cookies(cookies, raw_cookies)
+        save_cookies(cookies)
+        print("💾 Cookies saved to mini_postman_cookies.json")
+
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage:")
-        print("   python3 mini_postman.py request.json")
-        sys.exit(1)
-
-    send_request_from_file(sys.argv[1])
+    main()

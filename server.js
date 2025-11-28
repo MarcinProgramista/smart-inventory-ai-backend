@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import cors from "cors";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 import { fileURLToPath } from "url";
 import { corsOptions } from "./config/corsOptions.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -10,7 +11,7 @@ import { db } from "./db.js";
 import { requireDB } from "./middleware/requireDB.js";
 import registerRoute from "./routes/registerRoute.js";
 import usersRoute from "./routes/usersRoute.js";
-
+import loginRoute from "./routes/authRoute.js";
 dotenv.config();
 const app = express();
 
@@ -20,6 +21,7 @@ const __dirname = path.dirname(__filename);
 app.use(logger);
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 app.use(requireDB); // <-- NOWE
 
 app.get("/", (req, res) => {
@@ -55,6 +57,8 @@ app.get("/ready", async (req, res) => {
 
 app.use("/api/register", registerRoute);
 app.use("/api/users", usersRoute);
+app.use("/api/auth", loginRoute);
+
 // Full health status
 app.get("/health", async (req, res) => {
   try {
