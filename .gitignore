@@ -201,6 +201,7 @@ Thumbs.db
 # PostgreSQL dump files
 # ------------------------------------
 *.sql
+!schema.sql
 *.dump
 
 # ------------------------------------
