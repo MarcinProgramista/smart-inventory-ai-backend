@@ -17,6 +17,8 @@ const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+console.log("ACCESS:", process.env.ACCESS_TOKEN_SECRET);
+console.log("REFRESH:", process.env.REFRESH_TOKEN_SECRET);
 
 app.use(logger);
 app.use(cors(corsOptions));
