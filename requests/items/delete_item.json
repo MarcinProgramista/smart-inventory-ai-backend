@@ -1,0 +1,7 @@
+{
+  "method": "DELETE",
+  "url": "http://localhost:5000/api/items/1",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}

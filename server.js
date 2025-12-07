@@ -12,13 +12,13 @@ import { requireDB } from "./middleware/requireDB.js";
 import registerRoute from "./routes/registerRoute.js";
 import usersRoute from "./routes/usersRoute.js";
 import loginRoute from "./routes/authRoute.js";
+import itemsRoute from "./routes/itemsRoute.js";
+
 dotenv.config();
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-console.log("ACCESS:", process.env.ACCESS_TOKEN_SECRET);
-console.log("REFRESH:", process.env.REFRESH_TOKEN_SECRET);
 
 app.use(logger);
 app.use(cors(corsOptions));
@@ -60,6 +60,8 @@ app.get("/ready", async (req, res) => {
 app.use("/api/register", registerRoute);
 app.use("/api/users", usersRoute);
 app.use("/api/auth", loginRoute);
+
+app.use("/api/items", itemsRoute);
 
 // Full health status
 app.get("/health", async (req, res) => {

@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "url": "http://localhost:5000/api/items/search?q=test",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}

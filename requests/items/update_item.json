@@ -1,0 +1,15 @@
+{
+  "method": "PATCH",
+  "url": "http://localhost:5000/api/items/1",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "name": "Updated Test Item",
+    "quantity": 75,
+    "min_quantity": 15,
+    "supplier": "Updated Supplier Ltd",
+    "price": 24.99,
+    "description": "This item was updated via mini_postman."
+  }
+}
