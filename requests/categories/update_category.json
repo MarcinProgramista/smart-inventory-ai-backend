@@ -1,0 +1,8 @@
+{
+  "method": "PATCH",
+  "url": "http://localhost:5000/api/categories",
+  "body": {
+    "id": 12,
+    "name": "Updated Category Name"
+  }
+}

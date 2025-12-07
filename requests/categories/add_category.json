@@ -1,0 +1,8 @@
+{
+  "method": "POST",
+  "url": "http://localhost:5000/api/categories",
+  "body": {
+    "user_id": 2,
+    "name": "New Category"
+  }
+}
