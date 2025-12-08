@@ -1,0 +1,13 @@
+{
+  "method": "patch",
+  "url": "http://localhost:5000/api/suppliers",
+  "headers": { "Content-Type": "application/json" },
+  "body": {
+    "id": 1,
+    "name": "TechWorld S.A",
+    "contact": "Adam Nowak",
+    "phone": "111 111 111",
+    "email": "adam@techworld.pl",
+    "address": "Kraków, Poland"
+  }
+}

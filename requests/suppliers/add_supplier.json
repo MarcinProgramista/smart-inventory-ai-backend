@@ -1,0 +1,13 @@
+{
+  "method": "post",
+  "url": "http://localhost:5000/api/suppliers",
+  "headers": { "Content-Type": "application/json" },
+  "body": {
+    "user_id": 2,
+    "name": "TechWorls Sp. z o.o.",
+    "contact": "Narcin Kowalski",
+    "phone": "666 666 666",
+    "email": "marcin@tehworld.pl",
+    "addres": "Zamość, Poland"
+  }
+}

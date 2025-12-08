@@ -1,0 +1,4 @@
+{
+  "method": "get",
+  "url": "http://localhost:5000/api/suppliers?user_id=2"
+}

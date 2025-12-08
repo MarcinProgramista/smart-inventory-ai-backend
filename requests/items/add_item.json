@@ -1,0 +1,17 @@
+{
+  "method": "POST",
+  "url": "http://localhost:5000/api/items",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "user_id": 2,
+    "category_id": 6,
+    "name": "Keychron K8 Mechanical Keyboard",
+    "quantity": 25,
+    "min_quantity": 5,
+    "supplier": "Keychron Europe",
+    "price": 389,
+    "description": "Wireless mechanical keyboard, hot-swappable, RGB, Gateron Brown switches"
+  }
+}
