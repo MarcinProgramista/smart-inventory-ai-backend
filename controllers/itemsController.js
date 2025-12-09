@@ -6,9 +6,39 @@ import { db } from "../db.js";
 ------------------------------ */
 export const getAllItems = async (req, res) => {
   try {
-    const result = await db.query(
-      "SELECT * FROM items ORDER BY created_at DESC"
-    );
+    const userId = req.user?.id || req.query.user_id;
+
+    if (!userId) {
+      return res.status(400).json({ error: "Missing user_id" });
+    }
+
+    const query = `
+      SELECT 
+        i.id,
+        i.user_id,
+        i.category_id,
+        i.name,
+        i.quantity,
+        i.min_quantity,
+        i.price,
+        i.description,
+        i.created_at,
+        i.supplier_id,
+
+        s.name AS supplier_name,
+        s.contact AS supplier_contact,
+        s.phone AS supplier_phone,
+        s.email AS supplier_email,
+        s.address AS supplier_address
+
+      FROM items i
+      LEFT JOIN suppliers s ON s.id = i.supplier_id
+      WHERE i.user_id = $1
+      ORDER BY i.created_at DESC;
+    `;
+
+    const result = await db.query(query, [userId]);
+
     res.json(result.rows);
   } catch (error) {
     console.error("getAllItems error:", error);
@@ -48,7 +78,7 @@ export const searchItems = async (req, res) => {
 };
 
 /* ------------------------------
-   ADD ITEM
+      ADD OR UPDATE ITEM
 ------------------------------ */
 export const addItem = async (req, res) => {
   const {
@@ -57,32 +87,55 @@ export const addItem = async (req, res) => {
     name,
     quantity,
     min_quantity,
-    supplier,
+    supplier_id,
     price,
     description,
   } = req.body;
 
+  const qty = Number(quantity) || 0;
+
   try {
     const result = await db.query(
       `
-      INSERT INTO items 
-      (user_id, category_id, name, quantity, min_quantity, supplier, price, description)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-      RETURNING *
+      INSERT INTO items
+        (user_id, category_id, name, quantity, min_quantity, supplier_id, price, description)
+      VALUES
+        ($1, $2, $3, $4, $5, $6, $7, $8)
+      
+      ON CONFLICT (name, supplier_id, user_id)
+      DO UPDATE SET
+        quantity = items.quantity + EXCLUDED.quantity
+
+      RETURNING *,
+        (xmax = 0) AS created; -- TRUE jeśli insert, FALSE jeśli update
       `,
       [
         user_id,
         category_id,
         name,
-        quantity,
+        qty,
         min_quantity,
-        supplier,
+        supplier_id,
         price,
         description,
       ]
     );
 
-    res.status(201).json(result.rows[0]);
+    const item = result.rows[0];
+
+    if (item.created) {
+      return res.status(201).json({
+        created: true,
+        item,
+        message: "Item created",
+      });
+    } else {
+      return res.status(200).json({
+        updated: true,
+        item,
+        message: "Item existed — quantity increased",
+      });
+    }
   } catch (error) {
     console.error("addItem error:", error);
     res.status(500).json({ error: error.message });
