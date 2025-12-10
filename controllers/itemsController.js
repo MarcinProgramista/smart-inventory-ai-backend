@@ -1,6 +1,6 @@
 // controllers/itemsController.js
 import { db } from "../db.js";
-
+import { validateItem } from "../utils/validators/itemValidator.js";
 /* ------------------------------
    GET ALL ITEMS
 ------------------------------ */
@@ -80,7 +80,13 @@ export const searchItems = async (req, res) => {
 /* ------------------------------
       ADD OR UPDATE ITEM
 ------------------------------ */
+
 export const addItem = async (req, res) => {
+  const errors = validateItem(req.body);
+  if (errors.length > 0) {
+    return res.status(400).json({ errors });
+  }
+
   const {
     user_id,
     category_id,
@@ -91,38 +97,6 @@ export const addItem = async (req, res) => {
     price,
     description,
   } = req.body;
-
-  // --- VALIDATION --- //
-  if (!user_id) return res.status(400).json({ error: "Missing user_id" });
-
-  if (!name || typeof name !== "string" || name.trim().length < 2)
-    return res.status(400).json({ error: "Invalid item name" });
-
-  if (quantity === undefined || isNaN(Number(quantity)) || Number(quantity) < 0)
-    return res
-      .status(400)
-      .json({ error: "Quantity must be a non-negative number" });
-
-  if (
-    min_quantity === undefined ||
-    isNaN(Number(min_quantity)) ||
-    Number(min_quantity) < 0
-  )
-    return res
-      .status(400)
-      .json({ error: "Min quantity must be a non-negative number" });
-
-  if (!supplier_id || isNaN(Number(supplier_id)))
-    return res.status(400).json({ error: "Invalid supplier_id" });
-
-  if (price === undefined || isNaN(Number(price)) || Number(price) < 0)
-    return res.status(400).json({ error: "Price must be a positive number" });
-
-  if (description && typeof description !== "string")
-    return res.status(400).json({ error: "Description must be a string" });
-
-  if (category_id && isNaN(Number(category_id)))
-    return res.status(400).json({ error: "Invalid category_id" });
 
   const qty = Number(quantity);
 
@@ -151,19 +125,17 @@ export const addItem = async (req, res) => {
 
     const item = result.rows[0];
 
-    if (item.created) {
-      return res.status(201).json({
-        created: true,
-        item,
-        message: "Item created",
-      });
-    } else {
-      return res.status(200).json({
-        updated: true,
-        item,
-        message: "Item existed — quantity increased",
-      });
-    }
+    return item.created
+      ? res.status(201).json({
+          created: true,
+          item,
+          message: "Item created",
+        })
+      : res.status(200).json({
+          updated: true,
+          item,
+          message: "Item existed — quantity increased",
+        });
   } catch (error) {
     console.error("addItem error:", error);
     res.status(500).json({ error: error.message });
