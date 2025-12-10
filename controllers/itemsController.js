@@ -145,27 +145,67 @@ export const addItem = async (req, res) => {
 /* ------------------------------
    UPDATE ITEM
 ------------------------------ */
+
 export const updateItem = async (req, res) => {
   const { id } = req.params;
 
-  const { name, quantity, min_quantity, supplier, price, description } =
-    req.body;
+  // Normalizacja danych wejściowych
+  const payload = {
+    ...req.body,
+    name: req.body.name,
+    quantity: Number(req.body.quantity),
+    min_quantity: Number(req.body.min_quantity),
+    price: Number(req.body.price),
+    supplier_id: Number(req.body.supplier_id),
+    category_id: Number(req.body.category_id),
+    user_id: Number(req.body.user_id), // opcjonalnie jeśli przesyłasz
+  };
+
+  // --- VALIDATION --- //
+  const errors = validateItem(payload);
+  if (errors.length > 0) {
+    return res.status(400).json({ errors });
+  }
 
   try {
     const result = await db.query(
       `
       UPDATE items
-      SET name=$1, quantity=$2, min_quantity=$3, supplier=$4, price=$5, description=$6
-      WHERE id=$7
+      SET 
+        name = $1,
+        quantity = $2,
+        min_quantity = $3,
+        supplier_id = $4,
+        price = $5,
+        description = $6,
+        category_id = $7
+      WHERE id = $8
       RETURNING *
       `,
-      [name, quantity, min_quantity, supplier, price, description, id]
+      [
+        payload.name.trim(),
+        payload.quantity,
+        payload.min_quantity,
+        payload.supplier_id,
+        payload.price,
+        payload.description || null,
+        payload.category_id || null,
+        id,
+      ]
     );
 
-    res.json(result.rows[0]);
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Item not found" });
+    }
+
+    return res.json({
+      updated: true,
+      item: result.rows[0],
+      message: "Item updated successfully",
+    });
   } catch (error) {
     console.error("updateItem error:", error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
