@@ -92,7 +92,39 @@ export const addItem = async (req, res) => {
     description,
   } = req.body;
 
-  const qty = Number(quantity) || 0;
+  // --- VALIDATION --- //
+  if (!user_id) return res.status(400).json({ error: "Missing user_id" });
+
+  if (!name || typeof name !== "string" || name.trim().length < 2)
+    return res.status(400).json({ error: "Invalid item name" });
+
+  if (quantity === undefined || isNaN(Number(quantity)) || Number(quantity) < 0)
+    return res
+      .status(400)
+      .json({ error: "Quantity must be a non-negative number" });
+
+  if (
+    min_quantity === undefined ||
+    isNaN(Number(min_quantity)) ||
+    Number(min_quantity) < 0
+  )
+    return res
+      .status(400)
+      .json({ error: "Min quantity must be a non-negative number" });
+
+  if (!supplier_id || isNaN(Number(supplier_id)))
+    return res.status(400).json({ error: "Invalid supplier_id" });
+
+  if (price === undefined || isNaN(Number(price)) || Number(price) < 0)
+    return res.status(400).json({ error: "Price must be a positive number" });
+
+  if (description && typeof description !== "string")
+    return res.status(400).json({ error: "Description must be a string" });
+
+  if (category_id && isNaN(Number(category_id)))
+    return res.status(400).json({ error: "Invalid category_id" });
+
+  const qty = Number(quantity);
 
   try {
     const result = await db.query(
@@ -101,23 +133,19 @@ export const addItem = async (req, res) => {
         (user_id, category_id, name, quantity, min_quantity, supplier_id, price, description)
       VALUES
         ($1, $2, $3, $4, $5, $6, $7, $8)
-      
       ON CONFLICT (name, supplier_id, user_id)
-      DO UPDATE SET
-        quantity = items.quantity + EXCLUDED.quantity
-
-      RETURNING *,
-        (xmax = 0) AS created; -- TRUE jeśli insert, FALSE jeśli update
+      DO UPDATE SET quantity = items.quantity + EXCLUDED.quantity
+      RETURNING *, (xmax = 0) AS created;
       `,
       [
         user_id,
         category_id,
-        name,
+        name.trim(),
         qty,
         min_quantity,
         supplier_id,
         price,
-        description,
+        description || null,
       ]
     );
 
