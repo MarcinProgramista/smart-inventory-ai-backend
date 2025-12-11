@@ -1,6 +1,8 @@
 // controllers/itemsController.js
 import { db } from "../db.js";
 import { validateItem } from "../utils/validators/itemValidator.js";
+import { normalizeItemPayload } from "../utils/validators/normalizeItem.js";
+
 /* ------------------------------
    GET ALL ITEMS
 ------------------------------ */
@@ -82,10 +84,10 @@ export const searchItems = async (req, res) => {
 ------------------------------ */
 
 export const addItem = async (req, res) => {
-  const errors = validateItem(req.body);
-  if (errors.length > 0) {
-    return res.status(400).json({ errors });
-  }
+  const payload = normalizeItemPayload(req.body);
+
+  const errors = validateItem(payload); // bez flagi → tryb ADD
+  if (errors.length > 0) return res.status(400).json({ errors });
 
   const {
     user_id,
@@ -96,11 +98,10 @@ export const addItem = async (req, res) => {
     supplier_id,
     price,
     description,
-  } = req.body;
-
-  const qty = Number(quantity);
+  } = payload;
 
   try {
+    // 3️⃣ ZAPYTANIE SQL (insert lub update na konflikcie)
     const result = await db.query(
       `
       INSERT INTO items
@@ -114,28 +115,31 @@ export const addItem = async (req, res) => {
       [
         user_id,
         category_id,
-        name.trim(),
-        qty,
+        name,
+        quantity,
         min_quantity,
         supplier_id,
         price,
-        description || null,
+        description,
       ]
     );
 
     const item = result.rows[0];
 
-    return item.created
-      ? res.status(201).json({
-          created: true,
-          item,
-          message: "Item created",
-        })
-      : res.status(200).json({
-          updated: true,
-          item,
-          message: "Item existed — quantity increased",
-        });
+    // 4️⃣ ODPOWIEDŹ
+    if (item.created) {
+      return res.status(201).json({
+        created: true,
+        item,
+        message: "Item created",
+      });
+    } else {
+      return res.status(200).json({
+        updated: true,
+        item,
+        message: "Item existed — quantity increased",
+      });
+    }
   } catch (error) {
     console.error("addItem error:", error);
     res.status(500).json({ error: error.message });
@@ -147,25 +151,10 @@ export const addItem = async (req, res) => {
 ------------------------------ */
 
 export const updateItem = async (req, res) => {
-  const { id } = req.params;
+  const payload = normalizeItemPayload(req.body);
 
-  // Normalizacja danych wejściowych
-  const payload = {
-    ...req.body,
-    name: req.body.name,
-    quantity: Number(req.body.quantity),
-    min_quantity: Number(req.body.min_quantity),
-    price: Number(req.body.price),
-    supplier_id: Number(req.body.supplier_id),
-    category_id: Number(req.body.category_id),
-    user_id: Number(req.body.user_id), // opcjonalnie jeśli przesyłasz
-  };
-
-  // --- VALIDATION --- //
-  const errors = validateItem(payload);
-  if (errors.length > 0) {
-    return res.status(400).json({ errors });
-  }
+  const errors = validateItem(payload, { isUpdate: true });
+  if (errors.length > 0) return res.status(400).json({ errors });
 
   try {
     const result = await db.query(
