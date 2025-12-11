@@ -40,26 +40,34 @@ Rich logging & error handling
 ```
 smartinventory-backend/
 │
-├── config/
-│   ├── corsOptions.js         # Allowed domains & CORS rules
-│   └── allowedOrigins.js      # List of trusted frontend URLs
+├── controllers/
+│   ├── authController.js
+│   ├── categoriesController.js
+│   ├── itemsController.js
+│   ├── suppliersController.js
+│   └── usersController.js
+│
+├── utils/
+│   ├── jwt-helpers.js
+│   └── validators/
+│       ├── itemValidator.js
 │
 ├── middleware/
-│   ├── logger.js              # Logs every incoming request
-│   └── errorHandler.js        # Global error handler
+│   ├── logger.js
+│   ├── logEvents.js
+│   └── requireDB.js
 │
-├── controllers/               # Route handlers (register, items, etc.)
-├── routes/                    # API route grouping
+├── routes/
+│   ├── itemsRoute.js
+│   ├── suppliersRoute.js
+│   ├── categoriesRoute.js
+│   ├── usersRoute.js
+│   └── authRoute.js
 │
-├── logs/
-│   ├── reqLog.txt             # Saved request logs
-│   └── errLog.txt             # Saved backend errors
-│
-├── db.js                      # PostgreSQL client setup & connection
-├── server.js                  # Main Express app
-├── package.json               # Dependencies & scripts
-├── .env.example               # Example environment config
-└── README.md                  # Project documentation
+├── db.js
+├── server.js
+└── schema.sql
+
 ```
 
 🔍 Health Check Endpoints

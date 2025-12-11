@@ -50,14 +50,11 @@ export const getAllItems = async (req, res) => {
 
 /* ------------------------------
    SEARCH ITEMS
-   GET /api/items/search?q=term
 ------------------------------ */
 export const searchItems = async (req, res) => {
   const q = req.query.q;
 
-  if (!q || q.trim() === "") {
-    return res.json([]);
-  }
+  if (!q || q.trim() === "") return res.json([]);
 
   try {
     const result = await db.query(
@@ -65,7 +62,6 @@ export const searchItems = async (req, res) => {
       SELECT *
       FROM items
       WHERE LOWER(name) LIKE LOWER($1)
-         OR LOWER(supplier) LIKE LOWER($1)
          OR LOWER(description) LIKE LOWER($1)
       ORDER BY name ASC
       `,
@@ -80,28 +76,16 @@ export const searchItems = async (req, res) => {
 };
 
 /* ------------------------------
-      ADD OR UPDATE ITEM
+   ADD ITEM (OR INCREASE QUANTITY)
 ------------------------------ */
 
 export const addItem = async (req, res) => {
   const payload = normalizeItemPayload(req.body);
 
-  const errors = validateItem(payload); // bez flagi → tryb ADD
+  const errors = validateItem(payload);
   if (errors.length > 0) return res.status(400).json({ errors });
 
-  const {
-    user_id,
-    category_id,
-    name,
-    quantity,
-    min_quantity,
-    supplier_id,
-    price,
-    description,
-  } = payload;
-
   try {
-    // 3️⃣ ZAPYTANIE SQL (insert lub update na konflikcie)
     const result = await db.query(
       `
       INSERT INTO items
@@ -113,20 +97,19 @@ export const addItem = async (req, res) => {
       RETURNING *, (xmax = 0) AS created;
       `,
       [
-        user_id,
-        category_id,
-        name,
-        quantity,
-        min_quantity,
-        supplier_id,
-        price,
-        description,
+        payload.user_id,
+        payload.category_id,
+        payload.name,
+        payload.quantity,
+        payload.min_quantity,
+        payload.supplier_id,
+        payload.price,
+        payload.description,
       ]
     );
 
     const item = result.rows[0];
 
-    // 4️⃣ ODPOWIEDŹ
     if (item.created) {
       return res.status(201).json({
         created: true,
@@ -149,8 +132,8 @@ export const addItem = async (req, res) => {
 /* ------------------------------
    UPDATE ITEM
 ------------------------------ */
-
 export const updateItem = async (req, res) => {
+  const { id } = req.params;
   const payload = normalizeItemPayload(req.body);
 
   const errors = validateItem(payload, { isUpdate: true });
@@ -177,8 +160,8 @@ export const updateItem = async (req, res) => {
         payload.min_quantity,
         payload.supplier_id,
         payload.price,
-        payload.description || null,
-        payload.category_id || null,
+        payload.description,
+        payload.category_id,
         id,
       ]
     );
@@ -187,25 +170,27 @@ export const updateItem = async (req, res) => {
       return res.status(404).json({ error: "Item not found" });
     }
 
-    return res.json({
+    res.json({
       updated: true,
       item: result.rows[0],
       message: "Item updated successfully",
     });
   } catch (error) {
     console.error("updateItem error:", error);
-    return res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
 /* ------------------------------
    DELETE ITEM
 ------------------------------ */
+
 export const deleteItem = async (req, res) => {
   const { id } = req.params;
 
   try {
-    await db.query("DELETE FROM items WHERE id=$1", [id]);
+    await db.query("DELETE FROM items WHERE id = $1", [id]);
+
     res.json({ message: `Item ${id} deleted`, success: true });
   } catch (error) {
     console.error("deleteItem error:", error);
