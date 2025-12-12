@@ -4,8 +4,8 @@ import { validateItem } from "../utils/validators/itemValidator.js";
 import { normalizeItemPayload } from "../utils/validators/normalizeItem.js";
 
 /* ------------------------------
-   GET ALL ITEMS
------------------------------- */
+    GET ALL ITEMS
+  ------------------------------ */
 export const getAllItems = async (req, res) => {
   try {
     const userId = req.user?.id || req.query.user_id;
@@ -15,29 +15,29 @@ export const getAllItems = async (req, res) => {
     }
 
     const query = `
-      SELECT 
-        i.id,
-        i.user_id,
-        i.category_id,
-        i.name,
-        i.quantity,
-        i.min_quantity,
-        i.price,
-        i.description,
-        i.created_at,
-        i.supplier_id,
+        SELECT 
+          i.id,
+          i.user_id,
+          i.category_id,
+          i.name,
+          i.quantity,
+          i.min_quantity,
+          i.price,
+          i.description,
+          i.created_at,
+          i.supplier_id,
 
-        s.name AS supplier_name,
-        s.contact AS supplier_contact,
-        s.phone AS supplier_phone,
-        s.email AS supplier_email,
-        s.address AS supplier_address
+          s.name AS supplier_name,
+          s.contact AS supplier_contact,
+          s.phone AS supplier_phone,
+          s.email AS supplier_email,
+          s.address AS supplier_address
 
-      FROM items i
-      LEFT JOIN suppliers s ON s.id = i.supplier_id
-      WHERE i.user_id = $1
-      ORDER BY i.created_at DESC;
-    `;
+        FROM items i
+        LEFT JOIN suppliers s ON s.id = i.supplier_id
+        WHERE i.user_id = $1
+        ORDER BY i.created_at DESC;
+      `;
 
     const result = await db.query(query, [userId]);
 
@@ -49,8 +49,8 @@ export const getAllItems = async (req, res) => {
 };
 
 /* ------------------------------
-   SEARCH ITEMS
------------------------------- */
+    SEARCH ITEMS
+  ------------------------------ */
 export const searchItems = async (req, res) => {
   const q = req.query.q;
 
@@ -59,12 +59,12 @@ export const searchItems = async (req, res) => {
   try {
     const result = await db.query(
       `
-      SELECT *
-      FROM items
-      WHERE LOWER(name) LIKE LOWER($1)
-         OR LOWER(description) LIKE LOWER($1)
-      ORDER BY name ASC
-      `,
+        SELECT *
+        FROM items
+        WHERE LOWER(name) LIKE LOWER($1)
+          OR LOWER(description) LIKE LOWER($1)
+        ORDER BY name ASC
+        `,
       [`%${q}%`]
     );
 
@@ -76,8 +76,8 @@ export const searchItems = async (req, res) => {
 };
 
 /* ------------------------------
-   ADD ITEM (OR INCREASE QUANTITY)
------------------------------- */
+    ADD ITEM (OR INCREASE QUANTITY)
+  ------------------------------ */
 
 export const addItem = async (req, res) => {
   const payload = normalizeItemPayload(req.body);
@@ -88,13 +88,13 @@ export const addItem = async (req, res) => {
   try {
     const result = await db.query(
       `
-      INSERT INTO items
-        (user_id, category_id, name, quantity, min_quantity, supplier_id, price, description)
-      VALUES
-        ($1, $2, $3, $4, $5, $6, $7, $8)
-      ON CONFLICT (name, supplier_id, user_id)
-      DO UPDATE SET quantity = items.quantity + EXCLUDED.quantity
-      RETURNING *, (xmax = 0) AS created;
+        INSERT INTO items
+          (user_id, category_id, name, quantity, min_quantity, supplier_id, price, description)
+        VALUES
+          ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT (name, supplier_id, user_id)
+        DO UPDATE SET quantity = items.quantity + EXCLUDED.quantity
+        RETURNING *, (xmax = 0) AS created;
       `,
       [
         payload.user_id,
@@ -110,17 +110,36 @@ export const addItem = async (req, res) => {
 
     const item = result.rows[0];
 
+    // Pobierz pełne dane z JOIN
+    const fullData = await db.query(
+      `
+      SELECT 
+        i.*,
+        s.name AS supplier_name,
+        c.name AS category_name
+      FROM items i
+      LEFT JOIN suppliers s ON s.id = i.supplier_id
+      LEFT JOIN categories c ON c.id = i.category_id
+      WHERE i.id = $1
+      `,
+      [item.id]
+    );
+
+    const fullItem = fullData.rows[0];
+
     if (item.created) {
       return res.status(201).json({
+        id: fullItem.id,
+        item: fullItem,
         created: true,
-        item,
-        message: "Item created",
+        updated: false,
       });
     } else {
       return res.status(200).json({
+        id: fullItem.id,
+        item: fullItem,
+        created: false,
         updated: true,
-        item,
-        message: "Item existed — quantity increased",
       });
     }
   } catch (error) {
@@ -130,11 +149,16 @@ export const addItem = async (req, res) => {
 };
 
 /* ------------------------------
-   UPDATE ITEM
------------------------------- */
+    UPDATE ITEM
+  ------------------------------ */
 export const updateItem = async (req, res) => {
   const { id } = req.params;
+
   const payload = normalizeItemPayload(req.body);
+
+  payload.quantity = Number(payload.quantity);
+  payload.min_quantity = Number(payload.min_quantity);
+  payload.price = Number(payload.price);
 
   const errors = validateItem(payload, { isUpdate: true });
   if (errors.length > 0) return res.status(400).json({ errors });
@@ -152,7 +176,7 @@ export const updateItem = async (req, res) => {
         description = $6,
         category_id = $7
       WHERE id = $8
-      RETURNING *
+      RETURNING *;
       `,
       [
         payload.name.trim(),
@@ -170,20 +194,43 @@ export const updateItem = async (req, res) => {
       return res.status(404).json({ error: "Item not found" });
     }
 
-    res.json({
+    // --- POBIERAMY PEŁNE DANE Z JOINAMI ---
+    const fullData = await db.query(
+      `
+      SELECT
+        i.*,
+        s.name AS supplier_name,
+        c.name AS category_name
+      FROM items i
+      LEFT JOIN suppliers s ON s.id = i.supplier_id
+      LEFT JOIN categories c ON c.id = i.category_id
+      WHERE i.id = $1
+      `,
+      [id]
+    );
+
+    return res.json({
       updated: true,
-      item: result.rows[0],
+      item: fullData.rows[0],
       message: "Item updated successfully",
     });
   } catch (error) {
     console.error("updateItem error:", error);
-    res.status(500).json({ error: error.message });
+
+    // Obsługa konfliktu unikalnej nazwy
+    if (error.code === "23505") {
+      return res.status(400).json({
+        errors: { name: "Item with this name already exists" },
+      });
+    }
+
+    return res.status(500).json({ error: error.message });
   }
 };
 
 /* ------------------------------
-   DELETE ITEM
------------------------------- */
+    DELETE ITEM
+  ------------------------------ */
 
 export const deleteItem = async (req, res) => {
   const { id } = req.params;
