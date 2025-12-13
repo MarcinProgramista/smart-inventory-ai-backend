@@ -8,43 +8,44 @@ import { normalizeItemPayload } from "../utils/validators/normalizeItem.js";
   ------------------------------ */
 export const getAllItems = async (req, res) => {
   try {
-    const userId = req.user?.id || req.query.user_id;
+    const userId = Number(req.user?.id || req.query.user_id);
 
     if (!userId) {
       return res.status(400).json({ error: "Missing user_id" });
     }
 
     const query = `
-        SELECT 
-          i.id,
-          i.user_id,
-          i.category_id,
-          i.name,
-          i.quantity,
-          i.min_quantity,
-          i.price,
-          i.description,
-          i.created_at,
-          i.supplier_id,
+      SELECT 
+        i.id,
+        i.user_id,
+        i.category_id,
+        i.name,
+        i.quantity,
+        i.min_quantity,
+        i.price,
+        i.description,
+        i.created_at,
+        i.supplier_id,
 
-          s.name AS supplier_name,
-          s.contact AS supplier_contact,
-          s.phone AS supplier_phone,
-          s.email AS supplier_email,
-          s.address AS supplier_address
+        s.name AS supplier_name,
 
-        FROM items i
-        LEFT JOIN suppliers s ON s.id = i.supplier_id
-        WHERE i.user_id = $1
-        ORDER BY i.created_at DESC;
-      `;
+        c.first_name  AS contact_first_name,
+        c.last_name   AS contact_last_name,
+        c.mobile_phone AS contact_phone,
+        c.email       AS contact_email
 
-    const result = await db.query(query, [userId]);
+      FROM items i
+      LEFT JOIN suppliers s ON s.id = i.supplier_id
+      LEFT JOIN contacts c ON c.id = s.contact_id
+      WHERE i.user_id = $1
+      ORDER BY i.created_at DESC;
+    `;
 
-    res.json(result.rows);
+    const { rows } = await db.query(query, [userId]);
+    return res.json(rows);
   } catch (error) {
     console.error("getAllItems error:", error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: "Failed to fetch items" });
   }
 };
 

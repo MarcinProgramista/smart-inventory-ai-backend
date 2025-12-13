@@ -1,6 +1,6 @@
 {
   "method": "GET",
-  "url": "http://localhost:5000/api/items",
+  "url": "http://localhost:5000/api/items?user_id=3",
   "headers": {
     "Content-Type": "application/json"
   }
