@@ -1,0 +1,15 @@
+{
+  "method": "POST",
+  "url": "http://localhost:5000/api/contacts",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "user_id": 2,
+    "first_name": "Ewa",
+    "last_name": "Dow",
+    "role": "Kierownik",
+    "mobile_phone": "550-440-660",
+    "email": "ewa.dow@lightco.pl"
+  }
+}
