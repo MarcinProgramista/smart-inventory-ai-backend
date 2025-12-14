@@ -131,3 +131,32 @@ export const updateContact = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+/* ------------------------------
+    DELETE CONTACT
+  ------------------------------ */
+export const deleteContact = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await db.query(
+      "DELETE FROM contacts WHERE id = $1 RETURNING *",
+      [id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Contact not found" });
+    }
+
+    return res.json({
+      deleted: true,
+      message: `Contact ${id} deleted`,
+      contact: result.rows[0],
+    });
+  } catch (error) {
+    console.error("deleteContact error:", error);
+
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+};

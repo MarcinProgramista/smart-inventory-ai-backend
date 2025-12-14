@@ -1,0 +1,7 @@
+{
+  "method": "DELETE",
+  "url": "http://localhost:5000/api/contacts/6",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}
