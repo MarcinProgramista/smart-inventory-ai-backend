@@ -1,0 +1,15 @@
+{
+  "method": "PATCH",
+  "url": "http://localhost:5000/api/contacts/5",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "first_name": "Ewelina",
+    "last_name": "Kowalska",
+    "role": "Kierownik Zmiany",
+    "mobile_phone": "550440661",
+    "email": "ewelina.kowalska@lightco.pl",
+    "user_id": 3
+  }
+}

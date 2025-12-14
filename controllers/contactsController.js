@@ -69,3 +69,65 @@ export const addContact = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+/* ------------------------------
+    UPDATE CONTACT
+  ------------------------------ */
+export const updateContact = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Normalize input
+    const payload = normalizeContactPayload(req.body);
+
+    // Validate (update mode)
+    const errors = validateContact(payload, { isUpdate: true });
+    if (errors.length > 0) {
+      return res.status(400).json({ errors });
+    }
+
+    // Extract values
+    const { first_name, last_name, role, mobile_phone, email, user_id } =
+      payload;
+
+    // Update contact
+    const result = await db.query(
+      `
+      UPDATE contacts
+      SET
+        first_name = $1,
+        last_name = $2,
+        role = $3,
+        mobile_phone = $4,
+        email = $5,
+        user_id = $6,
+        updated_at = NOW()
+      WHERE id = $7
+      RETURNING *;
+      `,
+      [first_name, last_name, role, mobile_phone, email, user_id, id]
+    );
+
+    // If no record updated → not found
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Contact not found" });
+    }
+
+    return res.json({
+      updated: true,
+      contact: result.rows[0],
+      message: "Contact updated successfully",
+    });
+  } catch (error) {
+    console.error("updateContact error:", error);
+
+    // Unique email conflict
+    if (error.code === "23505") {
+      return res.status(400).json({
+        errors: { email: "Email already exists" },
+      });
+    }
+
+    return res.status(500).json({ error: error.message });
+  }
+};
