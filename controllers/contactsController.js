@@ -1,4 +1,5 @@
 import { db } from "../db.js";
+import { validateContact } from "../utils/validators/contactValidator.js";
 import { normalizeContactPayload } from "../utils/validators/normalizeContact.js";
 
 /* ------------------------------
@@ -28,6 +29,7 @@ export const getAllContacts = async (req, res) => {
   ------------------------------ */
 export const addContact = async (req, res) => {
   const payload = normalizeContactPayload(req.body);
-
+  const errors = validateContact(payload);
+  if (errors.length > 0) return res.status(400).json({ errors });
   return res.json(payload);
 };
