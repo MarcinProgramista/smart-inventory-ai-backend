@@ -160,3 +160,30 @@ export const deleteContact = async (req, res) => {
     });
   }
 };
+
+/* ------------------------------
+    GET SINGLE CONTACT
+  ------------------------------ */
+export const getContactById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await db.query(
+      `
+      SELECT *
+      FROM contacts
+      WHERE id = $1
+      `,
+      [id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Contact not found" });
+    }
+
+    return res.json(result.rows[0]);
+  } catch (error) {
+    console.error("getContactById error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
