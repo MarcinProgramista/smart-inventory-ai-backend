@@ -187,3 +187,72 @@ export const getContactById = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
+/* ------------------------------
+    SEARCH CONTACTS
+  ------------------------------ */
+export const searchContacts = async (req, res) => {
+  const q = req.query.q || "";
+  const sort = req.query.sort || "last_name";
+  const order = req.query.order === "desc" ? "DESC" : "ASC";
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 20;
+  const offset = (page - 1) * limit;
+
+  // Allowed sortable columns (security)
+  const allowedSort = [
+    "first_name",
+    "last_name",
+    "email",
+    "role",
+    "created_at",
+    "updated_at",
+  ];
+  const sortBy = allowedSort.includes(sort) ? sort : "last_name";
+
+  try {
+    const like = `%${q}%`;
+
+    const result = await db.query(
+      `
+      SELECT *
+      FROM contacts
+      WHERE 
+        first_name ILIKE $1 OR
+        last_name ILIKE $1 OR
+        email ILIKE $1 OR
+        role ILIKE $1 OR
+        mobile_phone ILIKE $1
+      ORDER BY ${sortBy} ${order}
+      LIMIT $2
+      OFFSET $3
+      `,
+      [like, limit, offset]
+    );
+
+    const countResult = await db.query(
+      `
+      SELECT COUNT(*) AS total
+      FROM contacts
+      WHERE 
+        first_name ILIKE $1 OR
+        last_name ILIKE $1 OR
+        email ILIKE $1 OR
+        role ILIKE $1 OR
+        mobile_phone ILIKE $1
+      `,
+      [like]
+    );
+
+    return res.json({
+      query: q,
+      page,
+      limit,
+      total: Number(countResult.rows[0].total),
+      results: result.rows,
+    });
+  } catch (error) {
+    console.error("searchContacts error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};

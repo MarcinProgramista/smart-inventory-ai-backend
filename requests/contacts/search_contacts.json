@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "url": "http://localhost:5000/api/contacts/search/query?q=aqua&sort=last_name&order=asc&page=1&limit=10",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}
