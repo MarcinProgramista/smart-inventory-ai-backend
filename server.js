@@ -15,6 +15,7 @@ import loginRoute from "./routes/authRoute.js";
 import itemsRoute from "./routes/itemsRoute.js";
 import categoriesRoute from "./routes/categoriesRoute.js";
 import suppliersRoute from "./routes/suppliersRoute.js";
+import contactsRoute from "./routes/contactsRoute.js";
 
 dotenv.config();
 const app = express();
@@ -67,6 +68,7 @@ app.use("/api/items", itemsRoute);
 
 app.use("/api/categories", categoriesRoute);
 app.use("/api/suppliers", suppliersRoute);
+app.use("/api/contacts", contactsRoute);
 
 // Full health status
 app.get("/health", async (req, res) => {
