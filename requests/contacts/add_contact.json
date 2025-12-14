@@ -5,7 +5,7 @@
     "Content-Type": "application/json"
   },
   "body": {
-    "user_id": 2,
+    "user_id": 3,
     "first_name": "Ewka",
     "last_name": "Tesla",
     "role": "Kierownik",
