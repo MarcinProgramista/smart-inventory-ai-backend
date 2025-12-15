@@ -6,14 +6,15 @@ import {
   addItem,
   updateItem,
   deleteItem,
+  searchItemsAdvanced,
 } from "../controllers/itemsController.js";
 
 const router = express.Router();
 
 router.get("/", getAllItems);
-router.get("/search", searchItems);
+
 router.post("/", addItem);
 router.patch("/:id", updateItem);
 router.delete("/:id", deleteItem);
-
+router.get("/search", searchItemsAdvanced);
 export default router;

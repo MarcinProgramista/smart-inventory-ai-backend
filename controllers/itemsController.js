@@ -245,3 +245,73 @@ export const deleteItem = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+/**
+ * SEARCH ITMES (ADVANCED)
+ */
+export const searchItemsAdvanced = async (req, res) => {
+  const {
+    q = "",
+    category_id,
+    supplier_id,
+    sort = "name",
+    order = "asc",
+    page = 1,
+    limit = 20,
+  } = req.query;
+  const offset = (Number(page) - 1) * Number(limit);
+  const allowedSort = ["name", "price", "quantity", "created_at"];
+
+  const sortBy = allowedSort.includes(sort) ? sort : "name";
+  const sortOrder = order === "desc" ? "DESC" : "ASC";
+
+  const values = [];
+  let where = "WHERE 1=1";
+  if (q.trim()) {
+    values.push(`%${q}%`);
+    where += `
+    AND (
+      LOWER(i.name) LIKE LOWER($${values.length})
+      OR LOWER(i.description) LIKE LOWER($${values.length})
+    )
+    `;
+  }
+  if (category_id) {
+    values.push(Number(category_id));
+    where += ` AND i.category_id = $${values.length}`;
+  }
+
+  if (supplier_id) {
+    values.push(Number(supplier_id));
+    where += ` AND i.supplier_id = $${values.length}`;
+  }
+
+  try {
+    const dataQuery = `
+    SELECT i.*
+    FROM items i
+    ${where}
+    ORDER BY ${sortBy} ${sortOrder}
+    LIMIT ${Number(limit)}
+    OFFSET ${offset}
+    `;
+    const countQuery = `
+      SELECT COUNT(*) AS total
+      FROM items i
+      ${where}
+    `;
+    const [dataResult, countResult] = await Promise.all([
+      db.query(dataQuery, values),
+      db.query(countQuery, values),
+    ]);
+    return res.json({
+      page: Number(page),
+      limit: Number(limit),
+      total: Number(countResult.rows[0].total),
+      items: dataResult.rows,
+    });
+  } catch (error) {
+    console.log("searchItemsAdvanced error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
