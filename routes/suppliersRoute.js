@@ -10,6 +10,6 @@ const router = express.Router();
 
 router.get("/", getSuppliers);
 router.post("/", addSupplier);
-router.patch("/", updateSupplier);
+router.patch("/:id", updateSupplier);
 router.delete("/:id", deleteSupplier);
 export default router;

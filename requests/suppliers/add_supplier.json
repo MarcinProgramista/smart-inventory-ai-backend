@@ -1,13 +1,16 @@
 {
-  "method": "post",
+  "method": "POST",
   "url": "http://localhost:5000/api/suppliers",
-  "headers": { "Content-Type": "application/json" },
+  "headers": {
+    "Content-Type": "application/json"
+  },
   "body": {
-    "user_id": 2,
-    "name": "TechWorls Sp. z o.o.",
-    "contact": "Narcin Kowalski",
-    "phone": "666 666 666",
-    "email": "marcin@tehworld.pl",
-    "addres": "Zamość, Poland"
+    "user_id": 3,
+    "name": "Pepsi",
+    "contact_id": 5,
+    "street": "Main Street 10",
+    "postal_code": "80-100",
+    "city": "Gdansk",
+    "country": "PL"
   }
 }

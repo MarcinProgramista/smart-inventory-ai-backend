@@ -1,4 +1,6 @@
 import { db } from "../db.js";
+import { normalizeSupplierPayload } from "../utils/validators/normalizeSupplier.js";
+import { validateSupplier } from "../utils/validators/validateSupplier.js";
 
 /* =============
     Ger all suppliers
@@ -22,19 +24,45 @@ export const getSuppliers = async (req, res) => {
  * ADD SUPPLIER
  */
 export const addSupplier = async (req, res) => {
-  const { user_id, name, contact, phone, email, address } = req.body;
-
-  if (!user_id || !name)
-    return res.satus(400).json({ error: "user_id and name required" });
   try {
+    const payload = normalizeSupplierPayload(req.body);
+    const errors = validateSupplier(payload);
+
+    if (errors.length > 0) {
+      return res.status(400).json({ errors });
+    }
+
+    const { user_id, name, contact_id, street, postal_code, city, country } =
+      payload;
+
     const result = await db.query(
-      `INSERT  INTO suppliers (user_id, name, contact, phone, email, address) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [user_id, name, contact, phone, email, address]
+      `
+      INSERT INTO suppliers (
+        user_id, name, contact_id, street, postal_code, city, country
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+      `,
+      [user_id, name, contact_id, street, postal_code, city, country]
     );
-    res.status(201).json(result.rows[0]);
+
+    return res.status(201).json(result.rows[0]);
   } catch (error) {
     console.log("addSupplier error:", error);
-    res.status(500).json({ error: error.message });
+
+    if (error.code === "23505") {
+      return res
+        .status(400)
+        .json({ error: "Supplier name already exists for this user" });
+    }
+
+    if (error.code === "23503") {
+      return res
+        .status(400)
+        .json({ error: "Referenced contact_id does not exist" });
+    }
+
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -42,20 +70,49 @@ export const addSupplier = async (req, res) => {
  * UPDATE SUPPLIER
  */
 export const updateSupplier = async (req, res) => {
-  const { id, name, contact, phone, email, address } = req.body;
-  if (!id || !name)
-    return res.status(400).json({ error: "id and name required" });
   try {
+    const payload = normalizeSupplierPayload(req.body);
+    const { id } = req.params;
+    const errors = validateSupplier(payload, { isUpdate: true });
+    if (errors.lenght > 0) {
+      return res.status(400).json({ errors });
+    }
+    const { name, contact_id, street, postal_code, city, country } = payload;
     const result = await db.query(
-      "UPDATE suppliers SET name =$1, contact=$2, phone=$3,email=$4, address=$5 WHERE id = $6 RETURNING *",
-      [name, contact, phone, email, address, id]
+      `
+      UPDATE suppliers
+      SET 
+        name = $1,
+        contact_id = $2,
+        street = $3,
+        postal_code = $4,
+        city = $5,
+        country = $6
+      WHERE id = $7
+      RETURNING *
+      `,
+      [name, contact_id, street, postal_code, city, country, id]
     );
-    if (result.rowCount === 0)
+    if (!result.rows.length) {
       return res.status(404).json({ error: "Supplier not found" });
-    res.json(result.rows[0]);
+    }
+    return res.json({
+      updated: true,
+      supplier: result.rows[0],
+    });
   } catch (error) {
-    console.error("updateSupplier error:", error);
-    res.status(500).json({ error: error.message });
+    console.log("uppdateSupplier error:", error);
+    if (error.code === "23505") {
+      return res
+        .status(400)
+        .json({ error: "Supplier name already exists for this user" });
+    }
+    if (error.code === "23503") {
+      return res
+        .status(400)
+        .json({ error: "Referenced contact_id does not exist" });
+    }
+    return res.status(500).json({ error: error.message });
   }
 };
 

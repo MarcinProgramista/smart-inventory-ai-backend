@@ -1,13 +1,15 @@
 {
-  "method": "patch",
-  "url": "http://localhost:5000/api/suppliers",
-  "headers": { "Content-Type": "application/json" },
+  "method": "PATCH",
+  "url": "http://localhost:5000/api/suppliers/7",
+  "headers": {
+    "Content-Type": "application/json"
+  },
   "body": {
-    "id": 1,
-    "name": "TechWorld S.A",
-    "contact": "Adam Nowak",
-    "phone": "111 111 111",
-    "email": "adam@techworld.pl",
-    "address": "Kraków, Poland"
+    "name": "LightCo Updated",
+    "contact_id": 5,
+    "street": "New Street 12",
+    "postal_code": "80-100",
+    "city": "Gdansk",
+    "country": "PL"
   }
 }
