@@ -194,7 +194,8 @@ export const getContactById = async (req, res) => {
    SEARCH CONTACTS (CLEAN)
 ------------------------------ */
 export const searchContactsAdvanced = async (req, res) => {
-  const { q = "", role, hasPhone, page = 1, limit = 20 } = req.query;
+  const { q = "", role, hasPhone, hasEmail, page = 1, limit = 20 } = req.query;
+  console.log("QUERY PARAMS:", req.query);
 
   const offset = (Number(page) - 1) * Number(limit);
 
@@ -227,6 +228,15 @@ export const searchContactsAdvanced = async (req, res) => {
 
   if (hasPhone === "no") {
     where += ` AND (mobile_phone IS NULL OR mobile_phone = '')`;
+  }
+
+  //📧 FILTER: hasEmail
+  if (hasEmail === "yes") {
+    where += ` AND email IS NOT NULL AND email <> ''`;
+  }
+
+  if (hasEmail === "no") {
+    where += ` AND (email IS NULL OR email = '')`;
   }
 
   try {

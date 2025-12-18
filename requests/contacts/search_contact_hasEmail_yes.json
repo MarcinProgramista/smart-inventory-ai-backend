@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "url": "http://localhost:5000/api/contacts/search?hasEmail=yes",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}
