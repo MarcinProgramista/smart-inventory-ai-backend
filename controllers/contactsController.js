@@ -194,9 +194,26 @@ export const getContactById = async (req, res) => {
    SEARCH CONTACTS (CLEAN)
 ------------------------------ */
 export const searchContactsAdvanced = async (req, res) => {
-  const { q = "", role, hasPhone, hasEmail, page = 1, limit = 20 } = req.query;
-  console.log("QUERY PARAMS:", req.query);
+  const {
+    q = "",
+    role,
+    hasPhone,
+    hasEmail,
+    sort = "last_name",
+    order = "asc",
+    page = 1,
+    limit = 20,
+  } = req.query;
+  const allowedSort = [
+    "first_name",
+    "last_name",
+    "email",
+    "role",
+    "created_at",
+  ];
 
+  const sortBy = allowedSort.includes(sort) ? sort : "last_name";
+  const sortOrder = order === "desc" ? "DESC" : "ASC";
   const offset = (Number(page) - 1) * Number(limit);
 
   const values = [];
@@ -238,13 +255,14 @@ export const searchContactsAdvanced = async (req, res) => {
   if (hasEmail === "no") {
     where += ` AND (email IS NULL OR email = '')`;
   }
+  console.log("SORT:", sort);
 
   try {
     const dataQuery = `
       SELECT *
       FROM contacts
       ${where}
-      ORDER BY last_name ASC
+      ORDER BY ${sortBy} ${sortOrder}
       LIMIT $${values.length + 1}
       OFFSET $${values.length + 2}
     `;
