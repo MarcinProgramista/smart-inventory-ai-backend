@@ -2,7 +2,6 @@
 import express from "express";
 import {
   getAllItems,
-  searchItems,
   addItem,
   updateItem,
   deleteItem,

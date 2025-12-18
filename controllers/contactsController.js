@@ -190,69 +190,74 @@ export const getContactById = async (req, res) => {
 
 /* ------------------------------
     SEARCH CONTACTS
-  ------------------------------ */
-export const searchContacts = async (req, res) => {
-  const q = req.query.q || "";
-  const sort = req.query.sort || "last_name";
-  const order = req.query.order === "desc" ? "DESC" : "ASC";
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 20;
-  const offset = (page - 1) * limit;
+/* ------------------------------
+   SEARCH CONTACTS (CLEAN)
+------------------------------ */
+export const searchContactsAdvanced = async (req, res) => {
+  const { q = "", role, hasPhone, page = 1, limit = 20 } = req.query;
 
-  // Allowed sortable columns (security)
-  const allowedSort = [
-    "first_name",
-    "last_name",
-    "email",
-    "role",
-    "created_at",
-    "updated_at",
-  ];
-  const sortBy = allowedSort.includes(sort) ? sort : "last_name";
+  const offset = (Number(page) - 1) * Number(limit);
+
+  const values = [];
+  let where = "WHERE 1=1";
+
+  // 🔎 SEARCH
+  if (q.trim()) {
+    values.push(`%${q}%`);
+    where += `
+      AND (
+        first_name ILIKE $${values.length}
+        OR last_name ILIKE $${values.length}
+        OR email ILIKE $${values.length}
+        OR role ILIKE $${values.length}
+        OR mobile_phone ILIKE $${values.length}
+      )
+    `;
+  }
+
+  // 🧩 FILTER: role
+  if (role) {
+    values.push(role);
+    where += ` AND role = $${values.length}`;
+  }
+  // 📞 FILTER: hasPhone
+  if (hasPhone === "yes") {
+    where += ` AND mobile_phone IS NOT NULL AND mobile_phone <> ''`;
+  }
+
+  if (hasPhone === "no") {
+    where += ` AND (mobile_phone IS NULL OR mobile_phone = '')`;
+  }
 
   try {
-    const like = `%${q}%`;
-
-    const result = await db.query(
-      `
+    const dataQuery = `
       SELECT *
       FROM contacts
-      WHERE 
-        first_name ILIKE $1 OR
-        last_name ILIKE $1 OR
-        email ILIKE $1 OR
-        role ILIKE $1 OR
-        mobile_phone ILIKE $1
-      ORDER BY ${sortBy} ${order}
-      LIMIT $2
-      OFFSET $3
-      `,
-      [like, limit, offset]
-    );
+      ${where}
+      ORDER BY last_name ASC
+      LIMIT $${values.length + 1}
+      OFFSET $${values.length + 2}
+    `;
 
-    const countResult = await db.query(
-      `
+    const countQuery = `
       SELECT COUNT(*) AS total
       FROM contacts
-      WHERE 
-        first_name ILIKE $1 OR
-        last_name ILIKE $1 OR
-        email ILIKE $1 OR
-        role ILIKE $1 OR
-        mobile_phone ILIKE $1
-      `,
-      [like]
-    );
+      ${where}
+    `;
+
+    const [dataResult, countResult] = await Promise.all([
+      db.query(dataQuery, [...values, Number(limit), offset]),
+      db.query(countQuery, values),
+    ]);
 
     return res.json({
-      query: q,
-      page,
-      limit,
+      page: Number(page),
+      limit: Number(limit),
       total: Number(countResult.rows[0].total),
-      results: result.rows,
+      items: dataResult.rows,
     });
   } catch (error) {
-    console.error("searchContacts error:", error);
+    console.error("searchContactsAdvanced error:", error);
     return res.status(500).json({ error: error.message });
   }
 };
