@@ -1,15 +1,13 @@
 {
   "method": "POST",
   "url": "http://localhost:5000/api/contacts",
-  "headers": {
-    "Content-Type": "application/json"
-  },
+  "headers": { "Content-Type": "application/json" },
   "body": {
     "user_id": 3,
-    "first_name": "Ewka",
-    "last_name": "Tesla",
-    "role": "Kierownik",
-    "mobile_phone": "550440660",
-    "email": "ewa.dow@lightco.pl"
+    "first_name": "Jakub",
+    "last_name": "Baran",
+    "role": "Administrator",
+    "mobile_phone": "606777888",
+    "email": "jakub.baran@test.pl"
   }
 }
