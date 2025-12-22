@@ -4,8 +4,8 @@
   "headers": { "Content-Type": "application/json" },
   "body": {
     "user_id": 3,
-    "first_name": "Jakub",
-    "last_name": "Baran",
+    "first_name": "Jakuba",
+    "last_name": "Barana",
     "role": "Administrator",
     "mobile_phone": "606777888",
     "email": "jakub.baran@test.pl"

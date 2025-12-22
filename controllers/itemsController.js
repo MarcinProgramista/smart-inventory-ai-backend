@@ -254,6 +254,7 @@ export const searchItemsAdvanced = async (req, res) => {
     q = "",
     category_id,
     supplier_id,
+    stock,
     sort = "name",
     order = "asc",
     page = 1,
@@ -281,6 +282,18 @@ export const searchItemsAdvanced = async (req, res) => {
     where += ` AND i.category_id = $${values.length}`;
   }
 
+  if (stock === "out") {
+    where += ` AND i.quantity = 0`;
+  }
+
+  if (stock === "low") {
+    where += ` AND i.quantity > 0 AND i.quantity <= i.min_quantity`;
+  }
+
+  if (stock === "ok") {
+    where += ` AND i.quantity > i.min_quantity`;
+  }
+
   if (supplier_id) {
     values.push(Number(supplier_id));
     where += ` AND i.supplier_id = $${values.length}`;
@@ -288,8 +301,14 @@ export const searchItemsAdvanced = async (req, res) => {
 
   try {
     const dataQuery = `
-    SELECT i.*
+    SELECT 
+       i.*,
+        s.name AS supplier_name,
+        c.name AS category_name
     FROM items i
+    LEFT JOIN suppliers s ON s.id = i.supplier_id
+    LEFT JOIN categories c ON c.id = i.category_id
+
     ${where}
     ORDER BY ${sortBy} ${sortOrder}
     LIMIT ${Number(limit)}
