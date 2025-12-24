@@ -268,6 +268,7 @@ export const searchItemsAdvanced = async (req, res) => {
     price: "i.price",
     created_at: "i.created_at",
     category: "c.name",
+    supplier: "s.name",
   };
 
   const sortBy = sortMap[sort] ?? "i.name";
