@@ -264,9 +264,10 @@ export const searchItemsAdvanced = async (req, res) => {
   const sortMap = {
     name: "i.name",
     quantity: "i.quantity",
+    min: "i.min_quantity", // ✅ TO JEST KLUCZ
     price: "i.price",
     created_at: "i.created_at",
-    category: "c.name", // ✅ TO JEST KLUCZ
+    category: "c.name",
   };
 
   const sortBy = sortMap[sort] ?? "i.name";
