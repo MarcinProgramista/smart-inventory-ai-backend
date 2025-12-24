@@ -264,11 +264,12 @@ export const searchItemsAdvanced = async (req, res) => {
   const sortMap = {
     name: "i.name",
     quantity: "i.quantity",
-    min: "i.min_quantity", // ✅ TO JEST KLUCZ
+    min: "i.min_quantity",
     price: "i.price",
     created_at: "i.created_at",
     category: "c.name",
     supplier: "s.name",
+    status: "stock_status", // ✅ KLUCZ
   };
 
   const sortBy = sortMap[sort] ?? "i.name";
@@ -310,13 +311,22 @@ export const searchItemsAdvanced = async (req, res) => {
 
   try {
     const dataQuery = `
-    SELECT 
-       i.*,
-        s.name AS supplier_name,
-        c.name AS category_name
-    FROM items i
-    LEFT JOIN suppliers s ON s.id = i.supplier_id
-    LEFT JOIN categories c ON c.id = i.category_id
+   SELECT 
+  i.*,
+  s.name AS supplier_name,
+  c.name AS category_name,
+  CASE
+  WHEN i.quantity = 0 THEN 0                 -- OUT
+  WHEN i.min_quantity = 0 THEN 3             -- N/A (no minimum)
+  WHEN i.quantity <= i.min_quantity THEN 1   -- LOW
+  ELSE 2                                     -- OK
+END AS stock_status
+
+
+FROM items i
+LEFT JOIN suppliers s ON s.id = i.supplier_id
+LEFT JOIN categories c ON c.id = i.category_id
+
 
     ${where}
     ORDER BY ${sortBy} ${sortOrder}
