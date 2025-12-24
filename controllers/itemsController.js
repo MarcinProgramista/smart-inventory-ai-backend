@@ -261,9 +261,16 @@ export const searchItemsAdvanced = async (req, res) => {
     limit = 20,
   } = req.query;
   const offset = (Number(page) - 1) * Number(limit);
-  const allowedSort = ["name", "price", "quantity", "created_at"];
+  const sortMap = {
+    name: "i.name",
+    quantity: "i.quantity",
+    price: "i.price",
+    created_at: "i.created_at",
+    category: "c.name", // ✅ TO JEST KLUCZ
+  };
 
-  const sortBy = allowedSort.includes(sort) ? sort : "name";
+  const sortBy = sortMap[sort] ?? "i.name";
+
   const sortOrder = order === "desc" ? "DESC" : "ASC";
 
   const values = [];
