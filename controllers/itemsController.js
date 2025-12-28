@@ -291,17 +291,20 @@ export const searchItemsAdvanced = async (req, res) => {
     values.push(Number(category_id));
     where += ` AND i.category_id = $${values.length}`;
   }
-
   if (stock === "out") {
     where += ` AND i.quantity = 0`;
   }
 
+  if (stock === "na") {
+    where += ` AND i.quantity > 0 AND i.min_quantity = 0`;
+  }
+
   if (stock === "low") {
-    where += ` AND i.quantity > 0 AND i.quantity <= i.min_quantity`;
+    where += ` AND i.quantity > 0 AND i.min_quantity > 0 AND i.quantity <= i.min_quantity`;
   }
 
   if (stock === "ok") {
-    where += ` AND i.quantity > i.min_quantity`;
+    where += ` AND i.min_quantity > 0 AND i.quantity > i.min_quantity`;
   }
 
   if (supplier_id) {
@@ -315,11 +318,11 @@ export const searchItemsAdvanced = async (req, res) => {
   i.*,
   s.name AS supplier_name,
   c.name AS category_name,
-  CASE
-  WHEN i.quantity = 0 THEN 0                 -- OUT
-  WHEN i.min_quantity = 0 THEN 3             -- N/A (no minimum)
-  WHEN i.quantity <= i.min_quantity THEN 1   -- LOW
-  ELSE 2                                     -- OK
+ CASE
+  WHEN i.quantity = 0 THEN 'out'
+  WHEN i.min_quantity = 0 THEN 'na'
+  WHEN i.quantity <= i.min_quantity THEN 'low'
+  ELSE 'ok'
 END AS stock_status
 
 
