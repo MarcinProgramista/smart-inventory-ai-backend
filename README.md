@@ -1,6 +1,10 @@
 🚀 SmartInventoryAI — Backend
 
-SmartInventoryAI is an advanced warehouse & inventory management backend built with Node.js, Express, and PostgreSQL, with planned AI-powered predictions for stock, demand, and anomalies.
+## Overview
+
+SmartInventoryAI Backend is a production-style REST API built with Node.js, Express, and PostgreSQL.
+It provides authentication, role-based access, inventory management, and system health monitoring.
+The backend is designed to be consumed by a separate frontend client (React).
 
 🔧 Tech Stack
 
@@ -23,6 +27,14 @@ AI Integration (Gemini/OpenAI) — planned
 Rich logging & error handling
 
 📌 Core Features
+
+## Design Decisions
+
+- REST API chosen for simplicity and frontend compatibility
+- JWT used for stateless authentication
+- PostgreSQL selected for relational data integrity
+- Explicit healthcheck endpoints added for production readiness
+- Backend kept independent from frontend implementation
 
 ```
 ✔ REST API for inventory and warehouse operations
