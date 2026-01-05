@@ -135,3 +135,109 @@ export const deleteSupplier = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const searchSuppliersAdvanced = async (req, res) => {
+  const {
+    user_id,
+    q = "",
+    city,
+    country,
+    hasContact,
+    sort = "name",
+    order = "asc",
+    page = 1,
+    limit = 20,
+  } = req.query;
+
+  if (!user_id) {
+    return res.status(400).json({ error: "user_id required" });
+  }
+
+  const allowedSort = ["name", "city", "country", "created_at"];
+  const sortBy = allowedSort.includes(sort) ? sort : "name";
+  const sortOrder = order === "desc" ? "DESC" : "ASC";
+  const offset = (Number(page) - 1) * Number(limit);
+
+  const values = [user_id];
+  let where = `WHERE s.user_id = $1`;
+
+  /* 🔎 GLOBAL SEARCH */
+  if (q.trim()) {
+    values.push(`%${q}%`);
+    const i = values.length;
+
+    where += `
+      AND (
+        s.name ILIKE $${i}
+        OR s.street ILIKE $${i}
+        OR s.postal_code ILIKE $${i}
+        OR s.city ILIKE $${i}
+        OR s.country ILIKE $${i}
+        OR c.first_name ILIKE $${i}
+        OR c.last_name ILIKE $${i}
+        OR c.email ILIKE $${i}
+        OR c.mobile_phone ILIKE $${i}
+      )
+    `;
+  }
+
+  if (city) {
+    values.push(`%${city}%`);
+    where += ` AND s.city ILIKE $${values.length}`;
+  }
+
+  if (country) {
+    values.push(`%${country}%`);
+    where += ` AND s.country ILIKE $${values.length}`;
+  }
+
+  if (hasContact === "yes") {
+    where += ` AND s.contact_id IS NOT NULL`;
+  }
+
+  if (hasContact === "no") {
+    where += ` AND s.contact_id IS NULL`;
+  }
+
+  try {
+    const dataQuery = `
+      SELECT
+        s.*,
+        json_build_object(
+          'id', c.id,
+          'first_name', c.first_name,
+          'last_name', c.last_name,
+          'email', c.email,
+          'mobile_phone', c.mobile_phone
+        ) AS contact
+      FROM suppliers s
+      LEFT JOIN contacts c ON c.id = s.contact_id
+      ${where}
+      ORDER BY s.${sortBy} ${sortOrder}
+      LIMIT $${values.length + 1}
+      OFFSET $${values.length + 2}
+    `;
+
+    const countQuery = `
+      SELECT COUNT(*) AS total
+      FROM suppliers s
+      LEFT JOIN contacts c ON c.id = s.contact_id
+      ${where}
+    `;
+
+    const [dataResult, countResult] = await Promise.all([
+      db.query(dataQuery, [...values, Number(limit), offset]),
+      db.query(countQuery, values),
+    ]);
+
+    return res.json({
+      page: Number(page),
+      limit: Number(limit),
+      total: Number(countResult.rows[0].total),
+      items: dataResult.rows,
+    });
+  } catch (error) {
+    console.error("searchSuppliersAdvanced error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
